@@ -1,4 +1,5 @@
 import os
+import sys
 import requests
 from pydantic import BaseModel, Field
 from langchain.prompts import PromptTemplate
@@ -32,7 +33,7 @@ class ZooAIModel:
     def __init__(self):
         """Initialize Gemini LLM and Deepgram API."""
         # Gemini LLM
-        gem_key = os.getenv("GEMINI_API_KEY", "AIzaSyDt928pvQOybM4guAeR2MzVWiUEGPCZGvA")
+        gem_key = "AIzaSyDt928pvQOybM4guAeR2MzVWiUEGPCZGvA"
         if gem_key:
             genai.configure(api_key=gem_key)
             self.llm = genai.GenerativeModel("gemini-2.5-flash")
@@ -40,7 +41,7 @@ class ZooAIModel:
             self.llm = None
 
         # Deepgram API
-        self.deepgram_key = os.getenv("DEEPGRAM_API_KEY", "66236062e554aa03b6c134fd627447bb6073dd7e")
+        self.deepgram_key = "66236062e554aa03b6c134fd627447bb6073dd7e"
         self.deepgram_url = "https://api.deepgram.com/v1/listen"
 
         # Parser & prompt
@@ -64,14 +65,14 @@ class ZooAIModel:
     # ----------------------------
     # Deepgram Transcription
     # ----------------------------
-    def transcribe_audio(self, audio_bytes, language="hi"):
+    def transcribe_audio(self, audio_bytes, language="hi", content_type: str = "audio/wav"):
         """Transcribe audio using Deepgram API."""
         if not self.deepgram_key:
             return "Audio transcription unavailable - Deepgram API key missing"
 
         headers = {
             "Authorization": f"Token {self.deepgram_key}",
-            "Content-Type": "audio/wav",  # assumes WAV upload
+            "Content-Type": content_type or "audio/wav",
         }
 
         try:
@@ -94,7 +95,7 @@ class ZooAIModel:
             return transcript or "No text returned by Deepgram"
 
         except Exception as e:
-            print("Error transcribing audio:", e)
+            print("Error transcribing audio:", e, file=sys.stderr)
             return f"Error in audio transcription: {str(e)}"
 
     # ----------------------------
@@ -123,9 +124,9 @@ class ZooAIModel:
             print(f"Error processing observation: {e}")
             return self._create_fallback_data(observation_text, date)
 
-    def process_audio_observation(self, audio_bytes, date, language="hi"):
+    def process_audio_observation(self, audio_bytes, date, language="hi", content_type: str = "audio/wav"):
         """Transcribe audio and process observation."""
-        text = self.transcribe_audio(audio_bytes, language)
+        text = self.transcribe_audio(audio_bytes, language, content_type)
         if text.startswith("Error") or text.startswith("Audio transcription unavailable"):
             return self._create_fallback_data(text, date)
         return self.process_observation(text, date)

@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, boolean, serial, jsonb, index } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, boolean, serial, jsonb, index, integer } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -44,7 +44,7 @@ export const submissions = pgTable("submissions", {
 // Comments on submissions from doctors and admins
 export const comments = pgTable("comments", {
   id: serial("id").primaryKey(),
-  submissionId: serial("submission_id").notNull().references(() => submissions.id),
+  submissionId: integer("submission_id").notNull().references(() => submissions.id),
   userId: varchar("user_id").notNull().references(() => users.id),
   content: text("content").notNull(),
   createdAt: timestamp("created_at").defaultNow(),

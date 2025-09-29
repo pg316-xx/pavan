@@ -1,6 +1,12 @@
+import 'dotenv/config';
+
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import fs from "fs/promises";
+import path from "path";
+import { storage } from "./storage";
+import { insertUserSchema } from "@shared/schema";
 
 const app = express();
 app.use(express.json());
@@ -37,6 +43,36 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  try {
+    // Ensure required directories exist
+    await fs.mkdir(path.join(process.cwd(), "uploads"), { recursive: true });
+    await fs.mkdir(path.join(process.cwd(), "reports"), { recursive: true });
+  } catch (e) {
+    log(`failed to ensure directories: ${String(e)}`);
+  }
+
+  // Seed default users if they do not exist yet
+  try {
+    const existingAdmin = await storage.getUserByCredentials({ userId: "admin1", password: "admin" });
+    const existingDoctor = await storage.getUserByCredentials({ userId: "doctor1", password: "doctor" });
+    const existingKeeper = await storage.getUserByCredentials({ userId: "keeper1", password: "keeper" });
+
+    if (!existingAdmin) {
+      await storage.createUser(insertUserSchema.parse({ userId: "admin1", password: "admin", role: "admin", name: "Admin User", email: "admin@example.com" }));
+      log("seeded default admin user (admin1/admin)");
+    }
+    if (!existingDoctor) {
+      await storage.createUser(insertUserSchema.parse({ userId: "doctor1", password: "doctor", role: "doctor", name: "Doctor User", email: "doctor@example.com" }));
+      log("seeded default doctor user (doctor1/doctor)");
+    }
+    if (!existingKeeper) {
+      await storage.createUser(insertUserSchema.parse({ userId: "keeper1", password: "keeper", role: "zookeeper", name: "Keeper One", email: "keeper@example.com" }));
+      log("seeded default zookeeper user (keeper1/keeper)");
+    }
+  } catch (e) {
+    log(`user seeding skipped/failed: ${String(e)}`);
+  }
+
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
@@ -63,8 +99,8 @@ app.use((req, res, next) => {
   const port = parseInt(process.env.PORT || '5000', 10);
   server.listen({
     port,
-    host: "0.0.0.0",
-    reusePort: true,
+    host: "localhost",
+    
   }, () => {
     log(`serving on port ${port}`);
   });

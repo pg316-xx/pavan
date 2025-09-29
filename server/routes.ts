@@ -108,7 +108,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         const user = req.session.user;
         const audioPath = req.file.path;
-        const audioFileName = `${user.userId}_${date}_${Date.now()}.wav`;
+        const uploadedMime = req.file.mimetype || "audio/wav";
+        const ext = uploadedMime.split("/")[1] || "wav";
+        const audioFileName = `${user.userId}_${date}_${Date.now()}.${ext}`;
 
         try {
           // Read audio file
@@ -121,25 +123,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Copy audio to temp location for processing
           await fs.copyFile(audioPath, tempAudioPath);
           
-          // Call Python script to process audio
-          const { stdout, stderr } = await execAsync(
-            `python3 -c "
-import sys
-sys.path.append('${path.join(process.cwd(), "server")}')
-from zoo_model import zoo_model
-import json
-
-# Read audio file
-with open('${tempAudioPath}', 'rb') as f:
-    audio_bytes = f.read()
-
-# Process audio
-result = zoo_model.process_audio_observation(audio_bytes, '${date}', 'hi')
-
-# Output structured data as JSON
-print(json.dumps(result.dict()))
-            "`
-          );
+          // Call Python script to process audio (cross-platform)
+          const runPy = process.env.PYTHON || (process.platform === 'win32' ? 'python' : 'python3');
+          const runnerPath = path.join(process.cwd(), "server", "run_model.py");
+          const { stdout, stderr } = await execAsync(`${runPy} "${runnerPath}" "${tempAudioPath}" "${date}" hi "${uploadedMime}"`);
 
           if (stderr) {
             console.error("Python script error:", stderr);
