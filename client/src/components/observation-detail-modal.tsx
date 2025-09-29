@@ -2,11 +2,11 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useQuery } from "@tanstack/react-query";
-import { Eye, Calendar, User, FileText, Activity, MapPin, Clock, Cloud } from "lucide-react";
+import { Eye, ArrowLeft, User as UserIcon, Image, Play, Pause } from "lucide-react";
 
 interface ObservationDetailModalProps {
   submissionId: number;
@@ -52,6 +52,7 @@ interface SubmissionDetail {
 
 export default function ObservationDetailModal({ submissionId, trigger }: ObservationDetailModalProps) {
   const [open, setOpen] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   const { data: submission, isLoading } = useQuery<SubmissionDetail>({
     queryKey: ["/api/submissions", submissionId],
@@ -59,144 +60,56 @@ export default function ObservationDetailModal({ submissionId, trigger }: Observ
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
+  // Helper function to get field value from structured data
+  const getFieldValue = (path: string): string => {
+    if (!submission?.structuredData) return '';
+    
+    const pathParts = path.split('.');
+    let current: any = submission.structuredData;
+    
+    for (const part of pathParts) {
+      if (current && typeof current === 'object') {
+        current = current[part];
+      } else {
+        return '';
+      }
+    }
+    
+    // Handle arrays (for animals)
+    if (Array.isArray(current) && current.length > 0) {
+      return current[0][pathParts[pathParts.length - 1]] || '';
+    }
+    
+    return typeof current === 'string' ? current : '';
   };
 
-  const formatTime = (dateString: string) => {
-    return new Date(dateString).toLocaleTimeString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
+  // Get animal data
+  const animalData = submission?.structuredData?.animals?.[0] || {};
+  
+  const renderFormField = (label: string, value: string, placeholder?: string) => (
+    <div className="space-y-2">
+      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{label}</label>
+      <Input
+        value={value || ''}
+        readOnly
+        placeholder={placeholder}
+        className="bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700"
+        data-testid={`field-${label.toLowerCase().replace(/\s+/g, '-')}`}
+      />
+    </div>
+  );
 
-  const renderAnimalObservations = (animals: any[]) => {
-    if (!animals || animals.length === 0) return null;
-
-    return animals.map((animal, index) => (
-      <Card key={index} className="mb-4">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg flex items-center">
-            <Activity className="mr-2 h-5 w-5 text-primary" />
-            {animal.species || "Animal"} {animal.name && `- ${animal.name}`}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {animal.behavior && (
-            <div>
-              <h4 className="font-medium text-sm text-muted-foreground mb-1">Behavior</h4>
-              <p className="text-sm">{animal.behavior}</p>
-            </div>
-          )}
-          {animal.health_status && (
-            <div>
-              <h4 className="font-medium text-sm text-muted-foreground mb-1">Health Status</h4>
-              <Badge variant={animal.health_status.toLowerCase().includes('good') || animal.health_status.toLowerCase().includes('healthy') ? "default" : "secondary"}>
-                {animal.health_status}
-              </Badge>
-            </div>
-          )}
-          {animal.location && (
-            <div>
-              <h4 className="font-medium text-sm text-muted-foreground mb-1 flex items-center">
-                <MapPin className="mr-1 h-3 w-3" />
-                Location
-              </h4>
-              <p className="text-sm">{animal.location}</p>
-            </div>
-          )}
-          {animal.notes && (
-            <div>
-              <h4 className="font-medium text-sm text-muted-foreground mb-1">Notes</h4>
-              <p className="text-sm">{animal.notes}</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    ));
-  };
-
-  const renderEnvironmentData = (environment: any) => {
-    if (!environment || Object.keys(environment).length === 0) return null;
-
-    return (
-      <Card className="mb-4">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg flex items-center">
-            <Cloud className="mr-2 h-5 w-5 text-blue-500" />
-            Environment Conditions
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="grid grid-cols-2 gap-4">
-            {environment.weather && (
-              <div>
-                <h4 className="font-medium text-sm text-muted-foreground mb-1">Weather</h4>
-                <p className="text-sm">{environment.weather}</p>
-              </div>
-            )}
-            {environment.temperature && (
-              <div>
-                <h4 className="font-medium text-sm text-muted-foreground mb-1">Temperature</h4>
-                <p className="text-sm">{environment.temperature}</p>
-              </div>
-            )}
-            {environment.humidity && (
-              <div>
-                <h4 className="font-medium text-sm text-muted-foreground mb-1">Humidity</h4>
-                <p className="text-sm">{environment.humidity}</p>
-              </div>
-            )}
-          </div>
-          {environment.notes && (
-            <div>
-              <h4 className="font-medium text-sm text-muted-foreground mb-1">Environment Notes</h4>
-              <p className="text-sm">{environment.notes}</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    );
-  };
-
-  const renderKeeperObservations = (keeperObs: any) => {
-    if (!keeperObs || Object.keys(keeperObs).length === 0) return null;
-
-    return (
-      <Card className="mb-4">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg flex items-center">
-            <User className="mr-2 h-5 w-5 text-green-500" />
-            Keeper Observations
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {keeperObs.general_notes && (
-            <div>
-              <h4 className="font-medium text-sm text-muted-foreground mb-1">General Notes</h4>
-              <p className="text-sm">{keeperObs.general_notes}</p>
-            </div>
-          )}
-          {keeperObs.concerns && (
-            <div>
-              <h4 className="font-medium text-sm text-muted-foreground mb-1">Concerns</h4>
-              <p className="text-sm text-amber-600">{keeperObs.concerns}</p>
-            </div>
-          )}
-          {keeperObs.recommendations && (
-            <div>
-              <h4 className="font-medium text-sm text-muted-foreground mb-1">Recommendations</h4>
-              <p className="text-sm text-blue-600">{keeperObs.recommendations}</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    );
-  };
+  const renderTextareaField = (label: string, value: string) => (
+    <div className="space-y-2">
+      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{label}</label>
+      <Textarea
+        value={value || ''}
+        readOnly
+        className="bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 min-h-[80px]"
+        data-testid={`field-${label.toLowerCase().replace(/\s+/g, '-')}`}
+      />
+    </div>
+  );
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -208,105 +121,123 @@ export default function ObservationDetailModal({ submissionId, trigger }: Observ
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[90vh]">
-        <DialogHeader>
-          <DialogTitle className="flex items-center">
-            <FileText className="mr-2 h-5 w-5" />
-            Observation Details
-          </DialogTitle>
-        </DialogHeader>
-        <ScrollArea className="max-h-[calc(90vh-8rem)] pr-4">
+      <DialogContent className="max-w-md max-h-[90vh] p-0 gap-0">
+        {/* Header */}
+        <div className="bg-green-600 text-white p-4 flex items-center justify-between rounded-t-lg">
+          <div className="flex items-center space-x-3">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="text-white hover:bg-green-700 p-1 h-8 w-8"
+              onClick={() => setOpen(false)}
+              data-testid="button-close-observation"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <h1 className="text-lg font-semibold">Safari Record</h1>
+          </div>
+          <UserIcon className="h-6 w-6" />
+        </div>
+
+        <ScrollArea className="max-h-[calc(90vh-4rem)]">
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
             </div>
           ) : submission ? (
-            <div className="space-y-6">
-              {/* Header Info */}
-              <div className="bg-muted/50 p-4 rounded-lg">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                  <div className="flex items-center">
-                    <Calendar className="mr-2 h-4 w-4 text-muted-foreground" />
-                    <div>
-                      <p className="font-medium">Date</p>
-                      <p className="text-muted-foreground">{formatDate(submission.date)}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center">
-                    <Clock className="mr-2 h-4 w-4 text-muted-foreground" />
-                    <div>
-                      <p className="font-medium">Time</p>
-                      <p className="text-muted-foreground">{formatTime(submission.createdAt)}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center">
-                    <User className="mr-2 h-4 w-4 text-muted-foreground" />
-                    <div>
-                      <p className="font-medium">Keeper</p>
-                      <p className="text-muted-foreground">{submission.user?.name || "Unknown"}</p>
-                    </div>
-                  </div>
-                  <div>
-                    <p className="font-medium">Status</p>
-                    <Badge variant={submission.status === "processed" ? "default" : "secondary"}>
-                      {submission.status}
-                    </Badge>
-                  </div>
+            <div className="p-4 space-y-6">
+              {/* Details Section */}
+              <div className="space-y-4">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Details</h2>
+                
+                <div className="space-y-4">
+                  {renderFormField("Species ?", animalData.species || '', "Enter species")}
+                  {renderFormField("Name of the wild animal ?", animalData.name || '', "Enter animal name")}
+                  {renderTextareaField("Animal behavior", animalData.behavior || '')}
+                  {renderFormField("Health status", animalData.health_status || '', "Enter health status")}
+                  {renderFormField("Location", animalData.location || '', "Enter location")}
+                  {renderTextareaField("Additional notes", animalData.notes || '')}
+                  {renderFormField("Weather conditions", getFieldValue('environment.weather'))}
+                  {renderFormField("Temperature", getFieldValue('environment.temperature'))}
+                  {renderFormField("Humidity", getFieldValue('environment.humidity'))}
+                  {renderTextareaField("General observations", getFieldValue('keeper_observations.general_notes'))}
+                  {renderTextareaField("Concerns", getFieldValue('keeper_observations.concerns'))}
+                  {renderTextareaField("Recommendations", getFieldValue('keeper_observations.recommendations'))}
                 </div>
               </div>
 
-              <Separator />
-
-              {/* Structured Data */}
-              {submission.structuredData && (
-                <div>
-                  <h3 className="text-xl font-semibold mb-4">Processed Observation Data</h3>
-                  
-                  {/* Animal Observations */}
-                  {submission.structuredData.animals && (
-                    <div className="mb-6">
-                      <h4 className="text-lg font-medium mb-3">Animal Observations</h4>
-                      {renderAnimalObservations(submission.structuredData.animals)}
+              {/* Images Section */}
+              <div className="space-y-4">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Images</h2>
+                <Card className="p-4">
+                  <div className="flex flex-col items-center space-y-4">
+                    <div className="w-24 h-24 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center">
+                      <Image className="h-8 w-8 text-gray-400" />
                     </div>
-                  )}
+                    <Button 
+                      className="bg-green-600 hover:bg-green-700 text-white"
+                      disabled
+                      data-testid="button-view-images"
+                    >
+                      <Image className="h-4 w-4 mr-2" />
+                      View Images
+                    </Button>
+                  </div>
+                </Card>
+              </div>
 
-                  {/* Environment Data */}
-                  {submission.structuredData.environment && (
-                    <div className="mb-6">
-                      <h4 className="text-lg font-medium mb-3">Environment</h4>
-                      {renderEnvironmentData(submission.structuredData.environment)}
+              {/* Audio Recording Section */}
+              <div className="space-y-4">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Audio Recording</h2>
+                <Card className="p-4">
+                  <div className="space-y-4">
+                    {/* Audio timeline */}
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400">
+                        <span>00:00:00</span>
+                        <span>00:00:00</span>
+                      </div>
+                      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                        <div className="bg-green-600 h-2 rounded-full w-0"></div>
+                      </div>
                     </div>
-                  )}
-
-                  {/* Keeper Observations */}
-                  {submission.structuredData.keeper_observations && (
-                    <div className="mb-6">
-                      <h4 className="text-lg font-medium mb-3">Additional Observations</h4>
-                      {renderKeeperObservations(submission.structuredData.keeper_observations)}
+                    
+                    {/* Play button */}
+                    <div className="flex justify-center">
+                      <Button
+                        variant="outline"
+                        size="lg"
+                        className="w-16 h-16 rounded-full border-2 border-gray-300 dark:border-gray-600"
+                        onClick={() => setIsPlaying(!isPlaying)}
+                        data-testid="button-play-audio"
+                      >
+                        {isPlaying ? (
+                          <Pause className="h-8 w-8" />
+                        ) : (
+                          <Play className="h-8 w-8 ml-1" />
+                        )}
+                      </Button>
                     </div>
-                  )}
 
-                  {/* Observation Type */}
-                  {submission.structuredData.observation_type && (
-                    <div className="mb-4">
-                      <h4 className="font-medium text-sm text-muted-foreground mb-1">Observation Type</h4>
-                      <Badge variant="outline">{submission.structuredData.observation_type}</Badge>
-                    </div>
-                  )}
-                </div>
-              )}
+                    {submission.audioFileName && (
+                      <div className="text-center">
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          Audio file: {submission.audioFileName}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </Card>
+              </div>
 
-              {/* Raw Transcription */}
+              {/* Original Transcription */}
               {submission.transcription && (
-                <div>
-                  <Separator className="my-4" />
-                  <h4 className="text-lg font-medium mb-3">Original Transcription</h4>
-                  <Card>
-                    <CardContent className="p-4">
-                      <p className="text-sm text-muted-foreground leading-relaxed">
-                        {submission.transcription}
-                      </p>
-                    </CardContent>
+                <div className="space-y-4">
+                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Original Transcription</h2>
+                  <Card className="p-4">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                      {submission.transcription}
+                    </p>
                   </Card>
                 </div>
               )}
@@ -314,9 +245,9 @@ export default function ObservationDetailModal({ submissionId, trigger }: Observ
               {/* No Data Message */}
               {!submission.structuredData && !submission.transcription && (
                 <div className="text-center py-8">
-                  <FileText className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                  <Eye className="mx-auto h-12 w-12 text-gray-400 mb-4" />
                   <h4 className="text-lg font-medium mb-2">No Processed Data</h4>
-                  <p className="text-muted-foreground">
+                  <p className="text-gray-600 dark:text-gray-400">
                     This observation is still being processed or encountered an error.
                   </p>
                 </div>
@@ -324,7 +255,7 @@ export default function ObservationDetailModal({ submissionId, trigger }: Observ
             </div>
           ) : (
             <div className="text-center py-8">
-              <p className="text-muted-foreground">Failed to load observation details.</p>
+              <p className="text-gray-600 dark:text-gray-400">Failed to load observation details.</p>
             </div>
           )}
         </ScrollArea>
