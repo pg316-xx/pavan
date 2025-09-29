@@ -133,18 +133,18 @@ export default function AdminDashboard() {
 
   // Calculate stats
   const totalSubmissions = submissions.length;
-  const pendingReviews = submissions.filter(s => s.submissions.status === "processing").length;
-  const activeKeepers = Array.from(new Set(submissions.map(s => s.users.id))).length;
+  const pendingReviews = submissions.filter(s => s.submissions?.status === "processing").length;
+  const activeKeepers = Array.from(new Set(submissions.map(s => s.users?.id).filter(Boolean))).length;
 
   // Filter submissions by keeper
   const filteredSubmissions = selectedKeeper === "all" 
     ? submissions 
-    : submissions.filter(s => s.users.id === selectedKeeper);
+    : submissions.filter(s => s.users?.id === selectedKeeper);
 
   // Get unique keepers for filter
-  const uniqueKeepers = Array.from(new Set(submissions.map(s => s.users.id))).map(id => {
-    const submission = submissions.find(s => s.users.id === id);
-    return { id, name: submission?.users.name || '' };
+  const uniqueKeepers = Array.from(new Set(submissions.map(s => s.users?.id).filter(Boolean))).map(id => {
+    const submission = submissions.find(s => s.users?.id === id);
+    return { id, name: submission?.users?.name || '' };
   });
 
   return (
@@ -311,7 +311,7 @@ export default function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredSubmissions.map((item) => (
+                    {filteredSubmissions.filter(item => item.submissions && item.users).map((item) => (
                       <tr 
                         key={item.submissions.id} 
                         className="border-b border-border hover:bg-secondary/30 transition-colors"
