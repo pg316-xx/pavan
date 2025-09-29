@@ -22,6 +22,7 @@ import {
   Check,
   Filter
 } from "lucide-react";
+import ObservationDetailModal from "@/components/observation-detail-modal";
 
 interface SubmissionWithUser {
   submissions: {
@@ -333,13 +334,18 @@ export default function AdminDashboard() {
                         </td>
                         <td className="py-4 px-4">
                           <div className="flex items-center space-x-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              data-testid={`button-view-${item.submissions.id}`}
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
+                            <ObservationDetailModal 
+                              submissionId={item.submissions.id}
+                              trigger={
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  data-testid={`button-view-${item.submissions.id}`}
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                              }
+                            />
                             <Button
                               variant="ghost"
                               size="sm"
