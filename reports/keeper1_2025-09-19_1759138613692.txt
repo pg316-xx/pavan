@@ -1,0 +1,38 @@
+ZOO ANIMAL MONITORING REPORT
+============================
+
+Date: 2025-09-19
+Zoo Keeper: Keeper One
+Generated: 9/29/2025, 9:36:53 AM
+
+OBSERVATION DETAILS
+-------------------
+Animal Observed on Time: Yes
+Clean Drinking Water Provided: Yes
+Enclosure Cleaned Properly: No
+Normal Behaviour Status: No
+Behaviour Details: Animal was less active than usual in the evening and and spent most of the morning lying in the shade.
+Feed and Supplements Available: Yes
+Feed Given as Prescribed: Yes
+Other Requirements: Extra bedding has been requested for the upcoming cold nights.
+
+MONITORING SUMMARIES
+--------------------
+Daily Animal Health Monitoring:
+In body health monitoring, temperature and health were found within normal limits, and there were no signs of injury or wounds. Slight scratching was observed on the outer skin last afternoon, which seemed to be due to playing.
+
+Carnivorous Animal Feeding Chart:
+Carnivorous animal feeding chart: 3.5 kg buffalo meat in the morning and 2 kg chicken in the evening were indicated, and all feed was eaten without any delay.
+
+Medicine Stock Register:
+In the medicine stock register, 12 units of vitamin were found after morning and night, which is less than the 14 units from the previous day.
+
+Daily Wildlife Monitoring:
+Daily wildlife monitoring in the surrounding area: one near Nagar, two jungle peacocks near Char Gaon, and traces of a langur near Badha were observed.
+
+AUTHORIZATION
+-------------
+In-charge Signature: R. K. Sharma
+
+---
+This report was generated automatically by the Zoo Management System.
