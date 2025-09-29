@@ -9,6 +9,7 @@ import { PawPrint, Calendar, Mic, History, Edit, Eye, LogOut } from "lucide-reac
 import CalendarCustom from "@/components/ui/calendar-custom";
 import AudioRecorder from "@/components/audio-recorder";
 import SuccessModal from "@/components/success-modal";
+import ObservationDetailModal from "@/components/observation-detail-modal";
 
 interface Submission {
   id: number;
@@ -91,11 +92,8 @@ export default function ZookeeperDashboard() {
   };
 
   const handleViewSubmission = (submissionId: number) => {
-    // TODO: Implement view functionality
-    toast({
-      title: "View Feature",
-      description: "View functionality will be available soon",
-    });
+    // View functionality is now handled by ObservationDetailModal
+    // Modal will open when the View button is clicked
   };
 
   const formatDate = (dateString: string) => {
@@ -238,14 +236,18 @@ export default function ZookeeperDashboard() {
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleViewSubmission(submission.id)}
-                          data-testid={`button-view-${submission.id}`}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
+                        <ObservationDetailModal 
+                          submissionId={submission.id}
+                          trigger={
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              data-testid={`button-view-${submission.id}`}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          }
+                        />
                       </div>
                     </div>
                   </div>
