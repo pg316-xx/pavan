@@ -15,10 +15,6 @@ run = ["uv", "run", "python", "main.py"]
 localPort = 5000
 externalPort = 80
 
-[[ports]]
-localPort = 46037
-externalPort = 3000
-
 [env]
 PORT = "5000"
 
