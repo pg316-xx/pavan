@@ -9,7 +9,7 @@ packages = ["bash", "ffmpeg-full", "libsndfile", "libxcrypt"]
 [deployment]
 deploymentTarget = "autoscale"
 build = ["npm", "run", "build"]
-run = ["npm", "run", "start"]
+run = ["uv", "run", "python", "main.py"]
 
 [[ports]]
 localPort = 5000

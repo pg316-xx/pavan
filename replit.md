@@ -19,18 +19,19 @@ Preferred communication style: Simple, everyday language.
 - **React Hook Form** with Zod validation for form handling
 
 ### Backend Architecture
-- **Express.js** server with TypeScript and ESM modules
-- **Session-based authentication** with express-session and PostgreSQL session storage
+- **FastAPI** server with Python
+- **Session-based authentication** with in-memory session storage using cookies
 - **Role-based access control** (admin, doctor, zookeeper roles)
 - **RESTful API** design with structured error handling
-- **Multer** for handling audio file uploads
-- **Python integration** for AI processing via child process execution
+- **File upload handling** for audio files
+- **Python integration** for AI processing via subprocess execution
+- **JSON-based user storage** with 5 admins, 10 doctors, and 100 zookeepers
 
-### Database Design
-- **PostgreSQL** with Neon serverless for hosting
-- **Drizzle ORM** for type-safe database operations and migrations
-- **Key entities**: Users (role-based), Submissions (audio recordings with metadata), Comments (feedback system), Sessions (authentication)
-- **Structured data storage** using JSONB for flexible animal monitoring data
+### Data Storage
+- **JSON file storage** for user credentials (users.json)
+- **In-memory storage** for submissions and comments
+- **File system storage** for audio recordings and generated reports
+- **Structured data storage** for flexible animal monitoring data
 
 ### AI Processing Pipeline
 - **Audio transcription** using Deepgram API
@@ -62,9 +63,9 @@ Preferred communication style: Simple, everyday language.
 - **Google Gemini API** (gemini-2.5-flash model) for text processing and structured data extraction
 - **Deepgram API** for high-accuracy audio transcription
 
-### Database & Hosting
-- **Neon Database** (PostgreSQL-compatible serverless database)
-- **WebSocket support** for database connections via @neondatabase/serverless
+### Backend Runtime
+- **FastAPI** (Python web framework for high-performance APIs)
+- **Uvicorn** (ASGI server for running FastAPI)
 
 ### UI Components
 - **Radix UI** primitives for accessible, unstyled components
@@ -83,5 +84,6 @@ Preferred communication style: Simple, everyday language.
 - **Google GenerativeAI** Python client for Gemini integration
 
 ### Session Management
-- **connect-pg-simple** for PostgreSQL-backed session storage
-- **Express-session** for server-side session handling
+- **In-memory session storage** with cookie-based authentication
+- **UUID-based session IDs** for secure session tracking
+- **24-hour session expiration** with automatic cleanup

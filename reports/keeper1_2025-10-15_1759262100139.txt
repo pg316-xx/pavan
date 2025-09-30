@@ -1,0 +1,38 @@
+ZOO ANIMAL MONITORING REPORT
+============================
+
+Date: 2025-10-15
+Zoo Keeper: Keeper Anderson
+Generated: 2025-09-30 19:55:00
+
+OBSERVATION DETAILS
+-------------------
+Animal Observed on Time: Yes
+Clean Drinking Water Provided: Yes
+Enclosure Cleaned Properly: Yes
+Normal Behaviour Status: Yes
+
+Feed and Supplements Available: Yes
+Feed Given as Prescribed: Yes
+Other Requirements: Audio transcription unavailable - Deepgram API key missing
+
+MONITORING SUMMARIES
+--------------------
+Daily Animal Health Monitoring:
+Observation recorded on 2025-10-15: Audio transcription unavailable - Deepgram API key missing
+
+Carnivorous Animal Feeding Chart:
+Standard feeding schedule followed
+
+Medicine Stock Register:
+Stock levels adequate
+
+Daily Wildlife Monitoring:
+Wildlife monitoring completed on 2025-10-15
+
+AUTHORIZATION
+-------------
+In-charge Signature: Zoo Keeper
+
+---
+This report was generated automatically by the Zoo Management System.
