@@ -32,17 +32,22 @@ class AnimalMonitoringData(BaseModel):
 class ZooAIModel:
     def __init__(self):
         """Initialize Gemini LLM and Deepgram API."""
-        # Gemini LLM
-        gem_key = "AIzaSyDt928pvQOybM4guAeR2MzVWiUEGPCZGvA"
+        # Gemini LLM - Load from environment variable
+        gem_key = os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")
         if gem_key:
             genai.configure(api_key=gem_key)
             self.llm = genai.GenerativeModel("gemini-2.5-flash")
+            print("[ZooAIModel] Gemini LLM initialized successfully", file=sys.stderr)
         else:
             self.llm = None
+            print("[ZooAIModel] WARNING: GOOGLE_API_KEY not found - AI processing disabled", file=sys.stderr)
 
-        # Deepgram API
-        self.deepgram_key = "66236062e554aa03b6c134fd627447bb6073dd7e"
+        # Deepgram API - Load from environment variable
+        self.deepgram_key = os.environ.get("DEEPGRAM_API_KEY")
         self.deepgram_url = "https://api.deepgram.com/v1/listen"
+        
+        if not self.deepgram_key:
+            print("[ZooAIModel] WARNING: DEEPGRAM_API_KEY not found - Audio transcription disabled", file=sys.stderr)
 
         # Parser & prompt
         self.parser = PydanticOutputParser(pydantic_object=AnimalMonitoringData)
