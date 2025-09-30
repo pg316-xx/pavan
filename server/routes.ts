@@ -49,27 +49,28 @@ const requireRole = (roles: string[]) => (req: Request, res: any, next: any) => 
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Setup session store (use PostgreSQL in production, memory in development)
+  // Setup session store - use PostgreSQL for all environments
   const PgSession = connectPgSimple(session);
-  const sessionStore = process.env.NODE_ENV === 'production' 
-    ? new PgSession({
-        pool: pool,
-        tableName: 'sessions',
-        createTableIfMissing: false, // Table already exists from schema
-      })
-    : undefined; // Use default MemoryStore in development
+  const sessionStore = new PgSession({
+    pool: pool,
+    tableName: 'sessions',
+    createTableIfMissing: false, // Table already exists from schema
+    pruneSessionInterval: 60 * 15, // Prune expired sessions every 15 minutes
+  });
 
   // Setup session middleware
   app.use(session({
     store: sessionStore,
-    secret: process.env.SESSION_SECRET || "zoo-management-secret",
+    secret: process.env.SESSION_SECRET || "zoo-management-secret-fallback",
     resave: false,
     saveUninitialized: false,
+    proxy: true, // Trust proxy for Render/production environments
     cookie: { 
-      secure: process.env.NODE_ENV === 'production' && process.env.FORCE_HTTPS === 'true',
+      secure: process.env.NODE_ENV === 'production' && process.env.RENDER === 'true',
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
       httpOnly: true,
-      sameSite: 'lax'
+      sameSite: 'lax',
+      path: '/'
     }
   }));
 
