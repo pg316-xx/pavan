@@ -1,6 +1,8 @@
 import type { Express, Request } from "express";
 import { createServer, type Server } from "http";
 import session from "express-session";
+import connectPgSimple from "connect-pg-simple";
+import { pool } from "./db";
 import { storage } from "./storage";
 import { loginSchema, insertCommentSchema } from "@shared/schema";
 import multer from "multer";
@@ -47,32 +49,63 @@ const requireRole = (roles: string[]) => (req: Request, res: any, next: any) => 
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Setup session store (use PostgreSQL in production, memory in development)
+  const PgSession = connectPgSimple(session);
+  const sessionStore = process.env.NODE_ENV === 'production' 
+    ? new PgSession({
+        pool: pool,
+        tableName: 'sessions',
+        createTableIfMissing: false, // Table already exists from schema
+      })
+    : undefined; // Use default MemoryStore in development
+
   // Setup session middleware
   app.use(session({
+    store: sessionStore,
     secret: process.env.SESSION_SECRET || "zoo-management-secret",
     resave: false,
     saveUninitialized: false,
     cookie: { 
-      secure: false, // Set to true in production with HTTPS
-      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+      secure: process.env.NODE_ENV === 'production' && process.env.FORCE_HTTPS === 'true',
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      httpOnly: true,
+      sameSite: 'lax'
     }
   }));
 
   // Authentication routes
   app.post("/api/auth/login", async (req, res) => {
     try {
+      console.log("[login] Received login request:", { body: req.body });
+      
       const credentials = loginSchema.parse(req.body);
+      console.log("[login] Credentials parsed successfully");
+      
       const user = await storage.getUserByCredentials(credentials);
+      console.log("[login] User lookup result:", user ? "User found" : "User not found");
       
       if (!user) {
         return res.status(401).json({ message: "Invalid credentials" });
       }
 
       req.session.user = user;
-      res.json({ user: { id: user.id, userId: user.userId, role: user.role, name: user.name } });
+      console.log("[login] Session user set, saving session...");
+      
+      // Explicitly save session before responding (important for PostgreSQL store)
+      req.session.save((err: any) => {
+        if (err) {
+          console.error("[login] Session save error:", err);
+          return res.status(500).json({ message: "Session save failed" });
+        }
+        console.log("[login] Session saved successfully");
+        res.json({ user: { id: user.id, userId: user.userId, role: user.role, name: user.name } });
+      });
     } catch (error) {
-      console.error("Login error:", error);
-      res.status(400).json({ message: "Invalid request" });
+      console.error("[login] Login error:", error);
+      if (error instanceof Error) {
+        console.error("[login] Error details:", error.message, error.stack);
+      }
+      res.status(400).json({ message: "Invalid request", error: error instanceof Error ? error.message : String(error) });
     }
   });
 
