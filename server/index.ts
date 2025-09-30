@@ -9,6 +9,12 @@ import { storage } from "./storage";
 import { insertUserSchema } from "@shared/schema";
 
 const app = express();
+
+// Trust proxy for production environments (Render, etc)
+if (process.env.NODE_ENV === 'production' || process.env.RENDER) {
+  app.set('trust proxy', 1);
+}
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
