@@ -3,7 +3,17 @@ import { drizzle } from 'drizzle-orm/neon-serverless';
 import ws from "ws";
 import * as schema from "@shared/schema";
 
-neonConfig.webSocketConstructor = ws;
+// Only configure WebSocket in development or when explicitly enabled
+// In production environments like Render, WebSocket connections can be problematic
+// so we use HTTP transport (default) which is more reliable for CRUD operations
+if (process.env.NODE_ENV === 'development' || process.env.ENABLE_WEBSOCKET === 'true') {
+  neonConfig.webSocketConstructor = ws;
+  console.log('[database] Using WebSocket transport for Neon connection');
+} else {
+  // Use HTTP transport in production for better compatibility
+  neonConfig.webSocketConstructor = undefined;
+  console.log('[database] Using HTTP transport for Neon connection');
+}
 
 if (!process.env.DATABASE_URL) {
   throw new Error(
