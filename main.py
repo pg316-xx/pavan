@@ -347,9 +347,37 @@ async def update_submission(
     
     return submission
 
-# Serve static files for production
-if os.path.exists("dist/public"):
-    app.mount("/", StaticFiles(directory="dist/public", html=True), name="static")
+# Serve static files
+static_dir = "dist/public"
+if os.path.exists(static_dir):
+    import mimetypes
+    
+    # Serve static assets (CSS, JS, images)
+    app.mount("/assets", StaticFiles(directory=os.path.join(static_dir, "assets")), name="assets")
+    
+    # Catch-all route for SPA - must be last
+    @app.get("/{full_path:path}")
+    async def serve_spa(full_path: str):
+        # Skip API routes
+        if full_path.startswith("api/"):
+            raise HTTPException(status_code=404, detail="Not Found")
+        
+        # Try to serve the requested file
+        file_path = os.path.join(static_dir, full_path)
+        
+        if os.path.exists(file_path) and os.path.isfile(file_path):
+            content_type, _ = mimetypes.guess_type(file_path)
+            if content_type is None:
+                content_type = "application/octet-stream"
+            
+            with open(file_path, "rb") as f:
+                content = f.read()
+            return Response(content=content, media_type=content_type)
+        else:
+            # Fallback to index.html for SPA routing
+            with open(os.path.join(static_dir, "index.html"), "rb") as f:
+                content = f.read()
+            return Response(content=content, media_type="text/html")
 
 if __name__ == "__main__":
     import uvicorn
